@@ -7,13 +7,13 @@
 package main
 
 import (
+  "embed"
   "fmt"
   "net/http"
   "html/template"
   "log"
   "strconv"
   "strings"
-  "os/exec"
   "sync"
   "time"
   _ "github.com/glebarez/go-sqlite"
@@ -23,6 +23,13 @@ import (
 )
 
 
+//down below is where we use a comment to tell GoCompiler to embed a folder named static which will be used later in the code
+
+//go:embed static/*
+var staticFiles embed.FS
+
+
+//object orient programming stuffz
 type Anime struct {
   Name string
   Year int
@@ -37,18 +44,9 @@ func newAnime(name string, year int, rating float64, img string) *Anime{
 }
 
 
+//We need to keep what the users pick private so this code is associated with that
 var userPicks = make(map[string][]*Anime)
 var userPicksMutex sync.RWMutex
-
-
-func openBrowser(url string) {
-	var err error
-	err = exec.Command("xdg-open", url).Start()
-	if err != nil {
-		log.Println("Error opening browser:", err)
-	}
-}
-
 
 func getUserID(w http.ResponseWriter, r *http.Request) string {
 	cookie, err := r.Cookie("user_id")
@@ -151,11 +149,13 @@ func searchTheDatabase(db *sql.DB, query string) []*Anime {
 
 
 
+
 type JikanAnime struct {
 	Data []struct {
-		Title string  `json:"title"`
-		Year  int     `json:"year"`   // Optional field (may be 0)
-		Score float64 `json:"score"`  // MAL rating
+		EngTitle string  `json:"title_english"` // Preferred
+		Title        string  `json:"title"`         // Fallback
+		Year         int     `json:"year"`
+		Score        float64 `json:"score"`
 
 		Images struct {
 			JPG struct {
@@ -167,6 +167,7 @@ type JikanAnime struct {
 
 
 
+
 // fetchFromJikan queries the Jikan API for anime data based on a search term
 func fetchFromJikan(query string) (*Anime, error) {
 	// Encode the search query using url.QueryEscape()
@@ -174,7 +175,6 @@ func fetchFromJikan(query string) (*Anime, error) {
   time.Sleep(1 * time.Second)
 	// Construct the API URL using the encoded search query, limit to 1 result
 	apiURL := fmt.Sprintf("https://api.jikan.moe/v4/anime?q=%s&limit=1", encodedQuery)
-	fmt.Println("Jikan API URL:", apiURL) // For debugging
 	// Make an HTTP GET request to the Jikan API
 	resp, err := http.Get(apiURL)
 	if err != nil {
@@ -204,26 +204,45 @@ func fetchFromJikan(query string) (*Anime, error) {
 	if year == 0 {
 		year = 2016
 	}
-	// Create your local Anime struct using the fetched database
-  anime := newAnime(jikanSingleData.Title, year, jikanSingleData.Score, jikanSingleData.Images.JPG.Img)
+  title := jikanSingleData.Title
+  if jikanSingleData.EngTitle != "" {
+    title = jikanSingleData.EngTitle
+  }
+  // Create your local Anime struct using the fetched database
+  anime := newAnime(title, year, jikanSingleData.Score, jikanSingleData.Images.JPG.Img)
 	return anime, nil
 }
+
 
 func main() {
     //yes, this is what it is
     db := setUpDatabase()
     defer db.Close()
     fmt.Println("Hello! Going to start the web server!")
-    
+  
+
     //now this is the function keep in mind that h1 means handler #1 NOT heading 1 (HTML)
-    h1 := func (w http.ResponseWriter, r *http.Request) {
-      tmp1 := template.Must(template.ParseFiles("index.html"))
-      tmp1.Execute(w, nil)
-    }
+  	h1 := func(w http.ResponseWriter, r *http.Request) {
+		  tmpl, err := template.ParseFS(staticFiles, "static/index.html")
+		  if err != nil {
+			  log.Fatalf("Error parsing index.html: %v", err)
+			  http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			  return
+		  }
+		  err = tmpl.Execute(w, nil)
+		  if err != nil {
+			  log.Fatalf("Error executing index.html: %v", err)
+			  http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			  return
+		  }
+	  }
+
 
 
     //You need this in order to use other things like pictures and css in your website
-    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+    // Serve static files from the embedded file system
+	  fs := http.FS(staticFiles)
+	  http.Handle("/static/", http.FileServer(fs))
     //since this is "/" basicly when you go to the homepage it tells the person Hey! go run h1 when visitng the homepage
     http.HandleFunc("/", h1)
 
@@ -326,7 +345,6 @@ func main() {
   })
 
 
-
 http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
     // Get the value the user typed in the search box. This matches the 'name="anime1"' from your HTML input.
     query := r.URL.Query().Get("anime1")
@@ -337,7 +355,7 @@ http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte("")) // nothing is written to the page
     } else {
         results := searchTheDatabase(db, query)
-        if len(results) < 3 {
+        if len(results) < 2 {
           //check jikan
           animeFromJikan, err := fetchFromJikan(query)
           if err != nil {
@@ -361,10 +379,9 @@ http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
             // Escape potentially dangerous user-controlled content
             escapedName := template.HTMLEscapeString(result.Name)
             escapedImg := template.HTMLEscapeString(result.Img)
-
             // fmt.Sprintf formats the string with the anime title in <p> tags
             html := fmt.Sprintf(
-              `<p>%s (%d) <button hx-post="/add" hx-vals='{"anime":"%s","year":%d,"rating":%.1f, "img":"%s"}' hx-target="#picks">Add</button></p>`,
+              `<p>%s (%d) <button hx-post="/add" hx-vals='{"anime":"%s","year":%d,"rating":%.1f, "img":"%s"}' hx-target="#picks" hx-swap="innerHTML" hx-on::after-request="htmx.ajax('POST', '/addSubmit', {target: '#submitArea', swap: 'innerHTML'})">Add</button></p>`,
               escapedName, result.Year, escapedName, result.Year, result.Rating, escapedImg,
             )
             w.Write([]byte(html))
@@ -377,7 +394,6 @@ http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
 })
 
 
-    openBrowser("http://localhost:8000")
     //log.fatal will recond something if it failed to make a webserver. ListenAndServe creates that server
-    log.Fatal(http.ListenAndServe(":8000", nil)) 
+    log.Fatal(http.ListenAndServe("127.0.0.1:5000", nil))
   }
