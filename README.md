@@ -13,7 +13,7 @@ Built with **Go** and **HTMX**, this app lets you choose your favorite anime and
   Quickly find any anime using a lightning-fast local SQLite database, and for extra coverage, it taps into the Jikan API.
 
 - **⚡ Live Selection**  
-  Add anime titles to your personal list on-the-fly, thanks to HTMX’s dynamic magic—no page reloads needed.
+  Add anime titles to your personal list on-the-fly
 
 - **🧠 Taste Judgment**  
   Receive humorous (and possibly savage) feedback based on your chosen lineup.
