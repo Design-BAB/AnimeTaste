@@ -1,23 +1,44 @@
-AnimeTaste 🍥✨
 
-Are you constantly bickering with your friends about who has the best anime taste? Or perhaps you just want a fun, meme-filled way to gauge your own preferences? Look no further! The Anime Taste Checker is a web application built with Go and HTMX that lets you pick your favorite anime and then delivers a verdict on your taste, complete with a healthy dose of meme-y judgment.
+# 🐸 Anime Taste Checker
 
-🚀 Features
+Tired of endless debates with friends over who has superior anime taste? Or maybe you're just curious to discover whether your picks make you a cultured connoisseur or a walking meme? Say no more. **Anime Taste Checker** is a web app that evaluates your anime preferences—with a splash of humor and unapologetic meme energy.
 
-    Anime Search: Easily find your favorite anime using the integrated search functionality, powered by a local SQLite database and the Jikan API (for extended search results).
+Built with **Go** and **HTMX**, this app lets you choose your favorite anime and delivers a cheeky verdict on your taste, because why not roast your own watchlist?
 
-    Dynamic Selection: Add anime to your personal list on the fly, thanks to the power of HTMX for seamless user experience.
+---
 
-    Taste Evaluation: Get a hilarious (and sometimes brutally honest) assessment of your anime preferences based on your selections.
+## 🚀 Features
 
-    Meme-tastic Verdicts: Prepare for some lighthearted roasts or high praise, depending on your picks!
+- **🔍 Search Functionality**  
+  Quickly find any anime using a lightning-fast local SQLite database, and for extra coverage, it taps into the Jikan API.
 
-🛠️ Technologies Used
+- **⚡ Live Selection**  
+  Add anime titles to your personal list on-the-fly, thanks to HTMX’s dynamic magic—no page reloads needed.
 
-    Go: The backend logic, database interaction, and API handling are all powered by Go, known for its performance and concurrency.
+- **🧠 Taste Judgment**  
+  Receive humorous (and possibly savage) feedback based on your chosen lineup.
 
-    HTMX: This lightweight JavaScript library allows for dynamic HTML updates without writing a lot of custom JavaScript, making the user experience snappy and interactive.
+- **😂 Meme Verdicts**  
+  Expect roasts, praise, or existential crisis-inducing takes. All in good fun, of course.
 
-    SQLite: A file-based database used to store anime information locally, ensuring quick access to frequently searched titles.
+---
 
-    Jikan API: When your local database doesn't have the anime you're looking for, the app reaches out to the Jikan API to fetch more data.
+## 🛠️ Tech Stack
+
+| Tech        | Role                                                             |
+|-------------|------------------------------------------------------------------|
+| **Go**      | Backend logic, DB interaction, and API integration               |
+| **HTMX**    | Enables dynamic updates without heavy JavaScript                 |
+| **SQLite**  | Stores anime data locally for snappy lookups                     |
+| **Jikan API** | Augments search results when the local DB needs backup         |
+
+---
+
+## 🏁 Getting Started
+
+Want to run it locally and see how your taste stacks up?
+
+### Prerequisites
+
+- **Go** installed on your machine.  
+  Get it here 👉 [https://go.dev/dl](https://go.dev/dl)
