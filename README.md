@@ -4,6 +4,7 @@
 Tired of endless debates with friends over who has superior anime taste? Or maybe you're just curious to discover whether your picks make you a cultured connoisseur or a walking meme? Say no more. **Anime Taste Checker** is a web app that evaluates your anime preferences—with a splash of humor.
 
 This app lets you choose your favorite anime and delivers a cheeky verdict on your taste, because why not roast your own watchlist?
+<img width="768" height="525" alt="Screenshot from 2025-08-27 20-31-54" src="https://github.com/user-attachments/assets/ce385058-5222-45f9-9f1f-695d55a1e749" />
 
 ---
 
